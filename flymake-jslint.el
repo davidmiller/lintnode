@@ -54,6 +54,8 @@
 
 (defvar lintnode-jslint-excludes nil)
 
+(defvar lintnode-jslint-includes nil)
+
 (defun lintnode-start ()
   "Start the lintnode server.
 Uses `lintnode-node-program' and `lintnode-location'."
@@ -62,12 +64,16 @@ Uses `lintnode-node-program' and `lintnode-location'."
   (let ((lintnode-location (expand-file-name (concat lintnode-location "/app.js")))
         (lintnode-excludes (if (not lintnode-jslint-excludes)
                                ""
-                             (mapconcat 'identity (mapcar 'symbol-name lintnode-jslint-excludes) ","))))
+                             (mapconcat 'identity (mapcar 'symbol-name lintnode-jslint-excludes) ",")))
+		(lintnode-includes (if (not lintnode-jslint-includes)
+                               ""
+                             (mapconcat 'identity (mapcar 'symbol-name lintnode-jslint-includes) ","))))
     (start-process "lintnode-server" "*lintnode*"
                    lintnode-node-program
                    lintnode-location
                    "--port" (number-to-string lintnode-port)
-                   "--exclude" lintnode-excludes)))
+                   "--exclude" lintnode-excludes
+				   "--include" lintnode-includes)))
 
 (defun lintnode-stop ()
   "stop the lintnode server process"

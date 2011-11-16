@@ -25,7 +25,7 @@ app.configure(function () {
     app.use(require('connect-form')({keepExtensions: true}));
     app.use(express.errorHandler(
         { dumpExceptions: true, showStack: true }));
-    app.use(express.bodyParser());
+    app.use(express.bodyDecoder());
 });
 
 var jslint_port = 3003;
@@ -130,18 +130,28 @@ app.post('/example/ok', function (req, res) {
 
 
 function parseCommandLine() {
-    var port_index, exclude_index, exclude_opts;
-    port_index = process.ARGV.indexOf('--port');
-    exclude_index = process.ARGV.indexOf('--exclude');
+    var port_index, exclude_index, exclude_opts, include_index, include_opts;
+    port_index = process.argv.indexOf('--port');
+    exclude_index = process.argv.indexOf('--exclude');
+    include_index = process.argv.indexOf('--include');
     if (port_index > -1) {
-        jslint_port = process.ARGV[port_index + 1];
+        jslint_port = process.argv[port_index + 1];
     }
     if (exclude_index > -1) {
-        exclude_opts = process.ARGV[exclude_index + 1].split(",");
+        exclude_opts = process.argv[exclude_index + 1].split(",");
         if (exclude_opts.length > 0 && exclude_opts[0] !== '') {
             _.each(exclude_opts, function (opt) {
                 sys.puts("Turning off " + opt);
                 jslint_options[opt] = false;
+            });
+        }
+    }
+    if (include_index > -1) {
+        include_opts = process.argv[include_index + 1].split(",");
+        if (include_opts.length > 0 && include_opts[0] !== '') {
+            _.each(include_opts, function (opt) {
+                sys.puts("Turning on " + opt);
+                jslint_options[opt] = true;
             });
         }
     }
