@@ -5,27 +5,26 @@
 
    Invoke from bash script like:
 
-     curl --form source="<${1}" ${JSLINT_URL}
+     curl --form source="<${1}" --form filename="${1}" ${JSLINT_URL}
+     
+   or use the provided jslint.curl
+   
+     jslint.curl <file>
 
-   If you use source="@${1}" instead, curl does it like a file upload.
-   That includes a filename, which is nice, but has express make a
-   temp file for the upload.
 */
 
 /*global process, require */
 var express = require("express");
 var JSLINT = require('./fulljslint');
 var fs = require('fs');
-var sys = require('sys');
 var _ = require('underscore');
 
 var app = express.createServer();
 
 app.configure(function () {
-    app.use(require('connect-form')({keepExtensions: true}));
     app.use(express.errorHandler(
         { dumpExceptions: true, showStack: true }));
-    app.use(express.bodyDecoder());
+    app.use(express.bodyParser());
 });
 
 var jslint_port = 3003;
@@ -69,46 +68,20 @@ app.get('/', function (req, res) {
     res.render('upload.haml');
 });
 
-app.post('/jslint', function (request, res) {
-    var filename;
-    if (! request.form) {
-        throw new TypeError("form data required");
-    }
-    return request.form.complete(function (err, fields, files) {
-        var headers = {'Content-Type': 'text/plain'};
-
-        function doLint(sourcedata) {
-            var passed, results;
-            passed = JSLINT.JSLINT(sourcedata, jslint_options);
-            if (passed) {
-                // debug("no errors\n");
-                results = "jslint: No problems found in " + filename + "\n";
-            } else {
-                results = outputErrors(JSLINT.JSLINT.errors);
-                // debug("results are" + results);
-            }
-            return results;
-        }
-
-        if (files.source) {
-            // FIXME: It's pretty silly that we have express write the upload to
-            // a tempfile only to read the entire thing back into memory
-            // again.
-            filename = files.source.filename;
-            fs.readFile(files.source.path, 'utf8',
-                function (err, sourcedata) {
-                    var results;
-                    results = doLint(sourcedata);
-                    res.send(results, headers, 200);
-                    fs.unlink(files.source.path);
-                });
+app.post('/jslint', function (req, res) {
+    function doLint(sourcedata) {
+        var passed, results;
+        passed = JSLINT.JSLINT(sourcedata, jslint_options);
+        if (passed) {
+            results = "jslint: No problems found in " + filename + "\n";
         } else {
-            filename = fields.filename;
-            res.send(doLint(fields.source), headers, 200);
+            results = outputErrors(JSLINT.JSLINT.errors);
         }
-    });
+        return results;
+    }
+    res.writeHead(200, {'Content-Type': 'text/plain'});
+    res.end(doLint(req.body.source));
 });
-
 
 /* This action always return some JSLint problems. */
 var exampleFunc = function (req, res) {
@@ -141,7 +114,7 @@ function parseCommandLine() {
         exclude_opts = process.argv[exclude_index + 1].split(",");
         if (exclude_opts.length > 0 && exclude_opts[0] !== '') {
             _.each(exclude_opts, function (opt) {
-                sys.puts("Turning off " + opt);
+                console.log("Turning off " + opt);
                 jslint_options[opt] = false;
             });
         }
@@ -150,14 +123,14 @@ function parseCommandLine() {
         include_opts = process.argv[include_index + 1].split(",");
         if (include_opts.length > 0 && include_opts[0] !== '') {
             _.each(include_opts, function (opt) {
-                sys.puts("Turning on " + opt);
+                console.log("Turning on " + opt);
                 jslint_options[opt] = true;
             });
         }
     }
 }
 
-sys.puts("Starting lintnode server");
+console.log("Starting lintnode server");
 parseCommandLine();
 app.listen(jslint_port);
-sys.puts("Lintnode server running on port " + jslint_port);
+console.log("Lintnode server running on port " + jslint_port);

@@ -10,7 +10,7 @@ Then I caught a talk on the `node.js`_ server, and saw a way.
 
 In my environment, this cuts jslint invocation time in half.
 
-This project also depends on the Express_ framework, with the connect-form, underscore
+This project also depends on the Express_ framework, with the underscore
 and haml packages.  I recommend installation with npm_ to manage these
 dependencies.
 
