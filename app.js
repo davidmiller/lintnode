@@ -65,7 +65,7 @@ var outputErrors = function (errors) {
 };
 
 app.get('/', function (req, res) {
-    res.render('upload.haml');
+    res.send('lintnode');
 });
 
 app.post('/jslint', function (req, res) {
@@ -73,14 +73,13 @@ app.post('/jslint', function (req, res) {
         var passed, results;
         passed = JSLINT.JSLINT(sourcedata, jslint_options);
         if (passed) {
-            results = "jslint: No problems found in " + filename + "\n";
+            results = "jslint: No problems found in " + req.body.filename + "\n";
         } else {
             results = outputErrors(JSLINT.JSLINT.errors);
         }
         return results;
     }
-    res.writeHead(200, {'Content-Type': 'text/plain'});
-    res.end(doLint(req.body.source));
+    res.send(doLint(req.body.source), {'Content-Type': 'text/plain'});
 });
 
 /* This action always return some JSLint problems. */
@@ -94,19 +93,18 @@ var exampleFunc = function (req, res) {
 app.get('/example/errors', exampleFunc);
 app.post('/example/errors', exampleFunc);
 
-
 /* This action always returns JSLint's a-okay message. */
 app.post('/example/ok', function (req, res) {
     res.send("jslint: No problems found in example.js\n",
         {'Content-Type': 'text/plain'});
 });
 
-
 function parseCommandLine() {
-    var port_index, exclude_index, exclude_opts, include_index, include_opts;
+    var port_index, exclude_index, exclude_opts, include_index, include_opts, set_index, set_opts, set_pair, properties;
     port_index = process.argv.indexOf('--port');
     exclude_index = process.argv.indexOf('--exclude');
     include_index = process.argv.indexOf('--include');
+    set_index = process.argv.indexOf('--set');
     if (port_index > -1) {
         jslint_port = process.argv[port_index + 1];
     }
@@ -114,7 +112,6 @@ function parseCommandLine() {
         exclude_opts = process.argv[exclude_index + 1].split(",");
         if (exclude_opts.length > 0 && exclude_opts[0] !== '') {
             _.each(exclude_opts, function (opt) {
-                console.log("Turning off " + opt);
                 jslint_options[opt] = false;
             });
         }
@@ -123,14 +120,41 @@ function parseCommandLine() {
         include_opts = process.argv[include_index + 1].split(",");
         if (include_opts.length > 0 && include_opts[0] !== '') {
             _.each(include_opts, function (opt) {
-                console.log("Turning on " + opt);
                 jslint_options[opt] = true;
             });
         }
     }
+    if (set_index > -1) {
+        set_opts = process.argv[set_index + 1].split(",");
+        if (set_opts.length > 0 && set_opts[0] !== '') {
+            _.each(set_opts, function (opt) {
+                if (opt.indexOf(":") > -1) {
+                    set_pair = opt.split(":");
+                    if (set_pair[1] === "true") {
+                        set_pair[1] = true;
+                    } else if (set_pair[1] === "false") {
+                        set_pair[1] = false;
+                    }
+                    jslint_options[set_pair[0]] = set_pair[1];
+                } else {
+                    jslint_options[opt] = true;
+                }
+            });
+        }
+    }
+    properties = "";
+    _.each(jslint_options, function (value, opt) {
+        properties = properties + opt + ": " + value + ", ";
+    });
+    return properties.substring(0, properties.length-2);
 }
 
-console.log("Starting lintnode server");
-parseCommandLine();
-app.listen(jslint_port);
-console.log("Lintnode server running on port " + jslint_port);
+process.on('SIGINT', function () {
+    console.log("\n[lintnode] received SIGINT, shutting down");
+    process.exit(0);
+});
+
+console.log("[lintnode]", parseCommandLine());
+app.listen(jslint_port, function () {
+    console.log("[lintnode] server running on port", jslint_port);
+});

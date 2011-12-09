@@ -52,9 +52,14 @@
   :type 'boolean
   :group 'flymake-jslint)
 
-(defvar lintnode-jslint-excludes nil)
+(defvar lintnode-jslint-excludes nil
+  "a list of lisp symbols corresponding to jslint boolean options")
 
-(defvar lintnode-jslint-includes nil)
+(defvar lintnode-jslint-includes nil
+  "a list of lisp symbols corresponding to jslint boolean options")
+
+(defvar lintnode-jslint-set nil
+  "a string of comma seperated jslint options; values are seperated via colon, e.g. maxlen:80,node:true,eqeqeq:false")
 
 (defun lintnode-start ()
   "Start the lintnode server.
@@ -68,12 +73,14 @@ Uses `lintnode-node-program' and `lintnode-location'."
 		(lintnode-includes (if (not lintnode-jslint-includes)
                                ""
                              (mapconcat 'identity (mapcar 'symbol-name lintnode-jslint-includes) ","))))
+					   
     (start-process "lintnode-server" "*lintnode*"
                    lintnode-node-program
                    lintnode-location
                    "--port" (number-to-string lintnode-port)
                    "--exclude" lintnode-excludes
-				   "--include" lintnode-includes)))
+				   "--include" lintnode-includes
+				   "--set" lintnode-jslint-set)))
 
 (defun lintnode-stop ()
   "stop the lintnode server process"

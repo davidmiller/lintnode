@@ -60,6 +60,10 @@ e.g.
 
 $ node app.js --exclude nomen,undef
 
+or
+
+$ node app.js --set maxlen:80,node
+
 Alternatively they can be configured within emacs by setting the variable lintnode-jslint-excludes
 
 For documentation on JSLint's options, see `JSLint
