@@ -70,17 +70,21 @@ Uses `lintnode-node-program' and `lintnode-location'."
         (lintnode-excludes (if (not lintnode-jslint-excludes)
                                ""
                              (mapconcat 'identity (mapcar 'symbol-name lintnode-jslint-excludes) ",")))
-		(lintnode-includes (if (not lintnode-jslint-includes)
+	(lintnode-includes (if (not lintnode-jslint-includes)
                                ""
-                             (mapconcat 'identity (mapcar 'symbol-name lintnode-jslint-includes) ","))))
-					   
-    (start-process "lintnode-server" "*lintnode*"
-                   lintnode-node-program
-                   lintnode-location
-                   "--port" (number-to-string lintnode-port)
-                   "--exclude" lintnode-excludes
-				   "--include" lintnode-includes
-				   "--set" lintnode-jslint-set)))
+                             (mapconcat 'identity (mapcar 'symbol-name lintnode-jslint-includes) ",")))
+    (lintnode-set (if (not lintnode-jslint-set)
+		      ""
+		    (mapconcat 'identity (mapcar 'symbol-name lintnode-jslint-set) ",")))
+    )
+  (start-process "lintnode-server" "*lintnode*"
+		 lintnode-node-program
+		 lintnode-location
+		 "--port" (number-to-string lintnode-port)
+		 "--exclude" lintnode-excludes
+		 "--include" lintnode-includes
+		 "--set" lintnode-set
+		 )))
 
 (defun lintnode-stop ()
   "stop the lintnode server process"
