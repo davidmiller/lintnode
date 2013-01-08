@@ -7,10 +7,19 @@
         "name": "Kevin Turner",
         "url": "http://keturn.net/"
     },
+    "contributors": [
+        {
+            "name": "David Miller",
+            "url": "http://github.com/davidmiller/lintnode"
+        },
+        {
+            "name": "Chad Walker",
+            "email": "chad@chad-cat-lore-eddie.com"
+        }
+    ],
+    "bin": "./app.js",
     "dependencies": {
-        "express": "<=2.5.9",
-        "haml": ">=0.2.0",
-        "underscore": ""
+        "express": "latest"
     },
     "engines": ["node >= 0.6.0"]
 }

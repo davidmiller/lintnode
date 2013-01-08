@@ -1,3 +1,6 @@
+#!node
+;
+'use strict';
 /* HTTP interface to JSLint.
 
    Takes roughly half the time to jslint something with this than to
@@ -6,98 +9,81 @@
    Invoke from bash script like:
 
      curl --form source="<${1}" --form filename="${1}" ${JSLINT_URL}
-     
+
    or use the provided jslint.curl
-   
+
      jslint.curl <file>
 
 */
 
-/*global process, require */
 var express = require("express");
-var JSLINT = require('./fulljslint');
-var fs = require('fs');
-var _ = require('underscore');
+var http = require('http');
+var JSLINT = require('./fulljslint').JSLINT;
+var package_info = require('./package');
 
-var app = express.createServer();
+var app = express();
 
-app.configure(function () {
-    app.use(express.errorHandler(
-        { dumpExceptions: true, showStack: true }));
-    app.use(express.bodyParser());
-});
+app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
+app.use(express.bodyParser());
 
 var jslint_port = 3003;
 
-/* copied from jslint's rhino.js */
+// use jslint's default options, by default
 var jslint_options = {
-    bitwise: true,
-    eqeqeq: true,
-    immed: true,
-    newcap: true,
-    nomen: true,
-    onevar: true,
-    plusplus: true,
-    regexp: true,
-    rhino: true,
-    undef: true,
-    white: true
 };
 
 var outputErrors = function (errors) {
     var e, i, output = [];
     // debug("Handling " + errors.length + "errors" + '\n');
-    function write(s) {
-        output.push(s + '\n');
-    }
+
     /* This formatting is copied from JSLint's rhino.js, to be compatible with
        the command-line invocation. */
     for (i = 0; i < errors.length; i += 1) {
         e = errors[i];
         if (e) {
-            write('Lint at line ' + e.line + ' character ' +
-                        e.character + ': ' + e.reason);
-            write((e.evidence || '').replace(/^\s*(\S*(\s+\S+)*)\s*$/, "$1"));
-            write('');
+            output.push('Lint at line ', e.line,  ' character ', e.character, ': ', e.reason, '\n');
+            output.push((e.evidence || '').replace(/^\s*(\S*(\s+\S+)*)\s*$/, "$1"), '\n');
+            output.push('\n');
         }
     }
     return output.join('');
 };
 
 app.get('/', function (req, res) {
-    res.send('lintnode');
+    res.type('text/plain').end('lintnode version: ' + package_info.version + '\n' + 'jslint edition: ' + JSLINT.edition + '\n');
 });
 
 app.post('/jslint', function (req, res) {
     function doLint(sourcedata) {
         var passed, results;
-        passed = JSLINT.JSLINT(sourcedata, jslint_options);
+        passed = JSLINT(sourcedata, jslint_options);
         if (passed) {
             results = "jslint: No problems found in " + req.body.filename + "\n";
         } else {
-            results = outputErrors(JSLINT.JSLINT.errors);
+            results = outputErrors(JSLINT.errors);
         }
         return results;
     }
-    res.send(doLint(req.body.source), {'Content-Type': 'text/plain'});
+    res.type('text/plain').end(doLint(req.body.source));
 });
 
 /* This action always return some JSLint problems. */
-var exampleFunc = function (req, res) {
-    JSLINT.JSLINT("a = function(){ return 7 + x }()",
+var exampleErrors = function (req, res) {
+    JSLINT("a = function(){ return 7 + x }()",
         jslint_options);
-    res.send(outputErrors(JSLINT.JSLINT.errors),
-        {'Content-Type': 'text/plain'});
+    res.type('text/plain').end(outputErrors(JSLINT.errors));
 };
 
-app.get('/example/errors', exampleFunc);
-app.post('/example/errors', exampleFunc);
-
 /* This action always returns JSLint's a-okay message. */
-app.post('/example/ok', function (req, res) {
-    res.send("jslint: No problems found in example.js\n",
-        {'Content-Type': 'text/plain'});
-});
+var exampleOk = function (req, res) {
+    res.type('text/plain').end("jslint: No problems found in example.js\n");
+};
+
+app.get('/example/errors', exampleErrors);
+app.post('/example/errors', exampleErrors);
+
+app.get('/example/ok', exampleOk);
+app.post('/example/ok', exampleOk);
 
 function parseCommandLine() {
     var port_index, exclude_index, exclude_opts, include_index, include_opts, set_index, set_opts, set_pair, properties;
@@ -111,7 +97,7 @@ function parseCommandLine() {
     if (exclude_index > -1) {
         exclude_opts = process.argv[exclude_index + 1].split(",");
         if (exclude_opts.length > 0 && exclude_opts[0] !== '') {
-            _.each(exclude_opts, function (opt) {
+            exclude_opts.forEach(function (opt) {
                 jslint_options[opt] = false;
             });
         }
@@ -119,7 +105,7 @@ function parseCommandLine() {
     if (include_index > -1) {
         include_opts = process.argv[include_index + 1].split(",");
         if (include_opts.length > 0 && include_opts[0] !== '') {
-            _.each(include_opts, function (opt) {
+            include_opts.forEach(function (opt) {
                 jslint_options[opt] = true;
             });
         }
@@ -127,7 +113,7 @@ function parseCommandLine() {
     if (set_index > -1) {
         set_opts = process.argv[set_index + 1].split(",");
         if (set_opts.length > 0 && set_opts[0] !== '') {
-            _.each(set_opts, function (opt) {
+            set_opts.forEach(function (opt) {
                 if (opt.indexOf(":") > -1) {
                     set_pair = opt.split(":");
                     if (set_pair[1] === "true") {
@@ -142,11 +128,10 @@ function parseCommandLine() {
             });
         }
     }
-    properties = "";
-    _.each(jslint_options, function (value, opt) {
-        properties = properties + opt + ": " + value + ", ";
-    });
-    return properties.substring(0, properties.length-2);
+    properties = Object.keys(jslint_options).map(function (opt) {
+        return opt + ": " + jslint_options[opt];
+    }).join('; ');
+    return properties;
 }
 
 process.on('SIGINT', function () {
@@ -154,7 +139,10 @@ process.on('SIGINT', function () {
     process.exit(0);
 });
 
+console.log('[lintnode] version:', package_info.version);
+console.log('[lintnode] jslint edition:', JSLINT.edition);
 console.log("[lintnode]", parseCommandLine());
-app.listen(jslint_port, function () {
+var http_server = http.createServer(app);
+http_server.listen(jslint_port, function () {
     console.log("[lintnode] server running on port", jslint_port);
 });
