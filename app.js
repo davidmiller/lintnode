@@ -1,6 +1,8 @@
-#!node
-;
+#!/usr/bin/env node
+
+/*global */
 'use strict';
+
 /* HTTP interface to JSLint.
 
    Takes roughly half the time to jslint something with this than to
