@@ -1,5 +1,5 @@
 // jslint.js
-// 2012-12-04
+// 2012-12-31
 
 // Copyright (c) 2002 Douglas Crockford  (www.JSLint.com)
 
@@ -272,7 +272,7 @@
     'margin-left', 'margin-right', 'margin-top', mark, 'marker-offset', match,
     'max-height', 'max-width', maxerr, maxlen, menu, message, meta, meter,
     'min-height', 'min-width', missing_a, missing_a_after_b, missing_option,
-    missing_property, missing_space_a_b, missing_url, missing_use_strict, mixed,
+    missing_property, missing_space_a_b, missing_url, missing_use_strict,
     mm, mode, move_invocation, move_var, n, name, name_function, nav,
     nested_comment, newcap, node, noframes, nomen, noscript, not,
     not_a_constructor, not_a_defined, not_a_function, not_a_label, not_a_scope,
@@ -289,8 +289,8 @@
     scanned_a_b, screen, script, search, second, section, select, shift,
     slash_equal, slice, sloppy, small, sort, source, span, speech, split, src,
     statement_block, stopping, strange_loop, strict, string, strong, stupid,
-    style, styleproperty, sub, subscript, substr, sup, supplant, sync_a, t,
-    table, 'table-layout', tag_a_in_b, tbody, td, test, 'text-align',
+    style, styleproperty, sub, subscript, substr, summary, sup, supplant,
+    sync_a, t,table, 'table-layout', tag_a_in_b, tbody, td, test, 'text-align',
     'text-decoration', 'text-indent', 'text-shadow', 'text-transform', textarea,
     tfoot, th, thead, third, thru, time, title, todo, todo_comment, toLowerCase,
     toString, toUpperCase, token, too_long, too_many, top, tr,
@@ -301,8 +301,8 @@
     unexpected_typeof_a, 'unicode-bidi', unnecessary_initialize,
     unnecessary_use, unparam, unreachable_a_b, unrecognized_style_attribute_a,
     unrecognized_tag_a, unsafe, unused, url, urls, use_array, use_braces,
-    use_charAt, use_object, use_or, use_param, used_before_a, var, var_a_not,
-    vars, 'vertical-align', video, visibility, was, weird_assignment,
+    use_charAt, use_object, use_or, use_param, use_spaces, used_before_a, var,
+    var_a_not, vars, 'vertical-align', video, visibility, was, weird_assignment,
     weird_condition, weird_new, weird_program, weird_relation, weird_ternary,
     white, 'white-space', width, windows, 'word-spacing', 'word-wrap', wrap,
     wrap_immediate, wrap_regexp, write_is_wrong, writeable, 'z-index'
@@ -542,7 +542,6 @@ var JSLINT = (function () {
             missing_space_a_b: "Missing space between '{a}' and '{b}'.",
             missing_url: "Missing url.",
             missing_use_strict: "Missing 'use strict' statement.",
-            mixed: "Mixed spaces and tabs.",
             move_invocation: "Move the invocation into the parens that " +
                 "contain the function.",
             move_var: "Move 'var' declarations to the top of the function.",
@@ -605,6 +604,7 @@ var JSLINT = (function () {
             use_object: "Use the object literal notation {}.",
             use_or: "Use the || operator.",
             use_param: "Use a named parameter.",
+            use_spaces: "Use spaces, not tabs.",
             used_before_a: "'{a}' was used before it was defined.",
             var_a_not: "Variable {a} was not declared correctly.",
             weird_assignment: "Weird assignment.",
@@ -825,6 +825,7 @@ var JSLINT = (function () {
             strong:   {},
             style:    {parent: ' head ', empty: true},
             sub:      {},
+            summary:  {parent: ' details '},
             sup:      {},
             table:    {},
             tbody:    {parent: ' table '},
@@ -923,7 +924,7 @@ var JSLINT = (function () {
 // carriage return, carriage return linefeed, or linefeed
         crlfx = /\r\n?|\n/,
 // unsafe characters that are silently deleted by one or more browsers
-        cx = /[\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/,
+        cx = /[\u0000-\u0008\u000a-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/,
 // query characters for ids
         dx = /[\[\]\/\\"'*<>.&:(){}+=#]/,
 // html token
@@ -1195,11 +1196,14 @@ var JSLINT = (function () {
             character = 1;
             source_row = lines[line];
             line += 1;
-            at = source_row.search(/ \t/);
+            at = source_row.search(/\t/);
             if (at >= 0) {
-                warn_at('mixed', line, at + 1);
+                if (option.white) {
+                    source_row = source_row.replace(/\t/g, ' ');
+                } else {
+                    warn_at('use_spaces', line, at + 1);
+                }
             }
-            source_row = source_row.replace(/\t/g, tab);
             at = source_row.search(cx);
             if (at >= 0) {
                 warn_at('unsafe', line, at);
@@ -6449,9 +6453,9 @@ klass:              do {
 
     itself.jslint = itself;
 
-    itself.edition = '2012-12-04';
+    itself.edition = '2012-12-31';
 
     return itself;
 }());
 
-exports.JSLINT = JSLINT;
+exports.jslint = JSLINT;

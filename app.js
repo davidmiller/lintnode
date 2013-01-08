@@ -20,7 +20,7 @@
 
 var express = require("express");
 var http = require('http');
-var JSLINT = require('./fulljslint').JSLINT;
+var jslint = require('./fulljslint').jslint;
 var package_info = require('./package');
 
 var app = express();
@@ -52,17 +52,17 @@ var outputErrors = function (errors) {
 };
 
 app.get('/', function (req, res) {
-    res.type('text/plain').end('lintnode version: ' + package_info.version + '\n' + 'jslint edition: ' + JSLINT.edition + '\n');
+    res.type('text/plain').end('lintnode version: ' + package_info.version + '\n' + 'jslint edition: ' + jslint.edition + '\n');
 });
 
 app.post('/jslint', function (req, res) {
     function doLint(sourcedata) {
         var passed, results;
-        passed = JSLINT(sourcedata, jslint_options);
+        passed = jslint(sourcedata, jslint_options);
         if (passed) {
             results = "jslint: No problems found in " + req.body.filename + "\n";
         } else {
-            results = outputErrors(JSLINT.errors);
+            results = outputErrors(jslint.errors);
         }
         return results;
     }
@@ -71,9 +71,9 @@ app.post('/jslint', function (req, res) {
 
 /* This action always return some JSLint problems. */
 var exampleErrors = function (req, res) {
-    JSLINT("a = function(){ return 7 + x }()",
+    jslint("a = function(){ return 7 + x }()",
         jslint_options);
-    res.type('text/plain').end(outputErrors(JSLINT.errors));
+    res.type('text/plain').end(outputErrors(jslint.errors));
 };
 
 /* This action always returns JSLint's a-okay message. */
@@ -142,7 +142,7 @@ process.on('SIGINT', function () {
 });
 
 console.log('[lintnode] version:', package_info.version);
-console.log('[lintnode] jslint edition:', JSLINT.edition);
+console.log('[lintnode] jslint edition:', jslint.edition);
 console.log("[lintnode]", parseCommandLine());
 var http_server = http.createServer(app);
 http_server.listen(jslint_port, function () {
