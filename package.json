@@ -1,8 +1,9 @@
 {
     "name": "lintnode",
-    "version": "0.1.1",
+    "version": "0.2.0",
     "description": "A JSLint server for more expedient linting.",
-    "homepage": "http://github.com/keturn/lintnode",
+    "keywords": "emacs flymake js-mode jslint",
+    "homepage": "http://github.com/chad3814/lintnode",
     "author": {
         "name": "Kevin Turner",
         "url": "http://keturn.net/"
@@ -17,9 +18,14 @@
             "email": "chad@chad-cat-lore-eddie.com"
         }
     ],
+    "repository": {
+        "type" : "git",
+        "url" : "http://github.com/chad3814/lintnode.git"
+    }
+    "preferGlobal": true,
     "bin": "./app.js",
     "dependencies": {
-        "express": "latest"
+        "express": "3.x"
     },
     "engines": ["node >= 0.6.0"]
 }
