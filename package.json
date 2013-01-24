@@ -19,9 +19,9 @@
         }
     ],
     "repository": {
-        "type" : "git",
-        "url" : "http://github.com/chad3814/lintnode.git"
-    }
+        "type": "git",
+        "url": "http://github.com/chad3814/lintnode.git"
+    },
     "preferGlobal": true,
     "bin": "./app.js",
     "dependencies": {
