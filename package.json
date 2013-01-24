@@ -2,7 +2,7 @@
     "name": "lintnode",
     "version": "0.2.0",
     "description": "A JSLint server for more expedient linting.",
-    "keywords": "emacs flymake js-mode jslint",
+    "keywords": ["emacs", "flymake", "js-mode", "jslint"],
     "homepage": "http://github.com/chad3814/lintnode",
     "author": {
         "name": "Kevin Turner",
