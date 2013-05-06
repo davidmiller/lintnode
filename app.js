@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-/*global */
 'use strict';
 
 /* HTTP interface to JSLint.
@@ -88,11 +87,12 @@ app.get('/example/ok', exampleOk);
 app.post('/example/ok', exampleOk);
 
 function parseCommandLine() {
-    var port_index, exclude_index, exclude_opts, include_index, include_opts, set_index, set_opts, set_pair, properties;
+    var port_index, exclude_index, exclude_opts, include_index, include_opts, set_index, set_opts, set_pair, properties, help_index;
     port_index = process.argv.indexOf('--port');
     exclude_index = process.argv.indexOf('--exclude');
     include_index = process.argv.indexOf('--include');
     set_index = process.argv.indexOf('--set');
+    help_index = process.argv.indexOf('--help');
     if (port_index > -1) {
         jslint_port = process.argv[port_index + 1];
     }
@@ -129,6 +129,20 @@ function parseCommandLine() {
                 }
             });
         }
+    }
+    if (help_index > -1) {
+        console.error('Usuage:', process.argv[1], '[--port <port>] [--exclude <option,option,...>] [--include <option,option,...>] [--set <option:value,option:value,...>] [--help]');
+        console.error('\t--port <port>');
+        console.error('\t\tSet the port the server will listen on');
+        console.error('\t--exclude <option,option,...>');
+        console.error('\t\tShorthand for option:false,option:false,...');
+        console.error('\t--include <option,option,...>');
+        console.error('\t\tShorthand for option:true,option:true,...');
+        console.error('\t--set <option:value,option:value,...>');
+        console.error('\t\tSet the options like /*jslint option:value*/');
+        console.error('\t--help');
+        console.error('\t\tThis help');
+        process.exit(0);
     }
     properties = Object.keys(jslint_options).map(function (opt) {
         return opt + ": " + jslint_options[opt];
