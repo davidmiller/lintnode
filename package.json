@@ -1,6 +1,6 @@
 {
     "name": "lintnode",
-    "version": "0.2.4",
+    "version": "0.2.5",
     "description": "A JSLint server for more expedient linting.",
     "keywords": ["emacs", "flymake", "js-mode", "jslint"],
     "homepage": "http://github.com/chad3814/lintnode",
@@ -23,7 +23,10 @@
         "url": "http://github.com/chad3814/lintnode.git"
     },
     "preferGlobal": true,
-    "bin": "./app.js",
+    "bin": {
+        "lintnode": "./app.js",
+        "jslinter": "./jslint.curl"
+    },
     "dependencies": {
         "express": "3.x"
     },
