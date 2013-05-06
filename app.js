@@ -28,6 +28,7 @@ app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 app.use(express.bodyParser());
 
 var jslint_port = 3003;
+var quiet = false;
 
 // use jslint's default options, by default
 var jslint_options = {
@@ -87,11 +88,12 @@ app.get('/example/ok', exampleOk);
 app.post('/example/ok', exampleOk);
 
 function parseCommandLine() {
-    var port_index, exclude_index, exclude_opts, include_index, include_opts, set_index, set_opts, set_pair, properties, help_index;
+    var port_index, exclude_index, exclude_opts, include_index, include_opts, set_index, set_opts, set_pair, properties, help_index, quiet_index;
     port_index = process.argv.indexOf('--port');
     exclude_index = process.argv.indexOf('--exclude');
     include_index = process.argv.indexOf('--include');
     set_index = process.argv.indexOf('--set');
+    quiet_index = process.argv.indexOf('--quiet');
     help_index = process.argv.indexOf('--help');
     if (port_index > -1) {
         jslint_port = process.argv[port_index + 1];
@@ -130,8 +132,11 @@ function parseCommandLine() {
             });
         }
     }
+    if (quiet_index > -1) {
+        quiet = true;
+    }
     if (help_index > -1) {
-        console.error('Usuage:', process.argv[1], '[--port <port>] [--exclude <option,option,...>] [--include <option,option,...>] [--set <option:value,option:value,...>] [--help]');
+        console.error('Usuage:', process.argv[1], '[--port <port>] [--exclude <option,option,...>] [--include <option,option,...>] [--set <option:value,option:value,...>] [--quiet] [--help]');
         console.error('\t--port <port>');
         console.error('\t\tSet the port the server will listen on');
         console.error('\t--exclude <option,option,...>');
@@ -140,6 +145,8 @@ function parseCommandLine() {
         console.error('\t\tShorthand for option:true,option:true,...');
         console.error('\t--set <option:value,option:value,...>');
         console.error('\t\tSet the options like /*jslint option:value*/');
+        console.error('\t--quiet');
+        console.error('\t\tDon\'t output diagnostics');
         console.error('\t--help');
         console.error('\t\tThis help');
         process.exit(0);
@@ -151,14 +158,23 @@ function parseCommandLine() {
 }
 
 process.on('SIGINT', function () {
-    console.log("\n[lintnode] received SIGINT, shutting down");
+    if (!quiet) {
+        console.log("\n[lintnode] received SIGINT, shutting down");
+    }
     process.exit(0);
 });
 
-console.log('[lintnode] version:', package_info.version);
-console.log('[lintnode] jslint edition:', jslint.edition);
-console.log("[lintnode]", parseCommandLine());
+var properties = parseCommandLine();
+
+if (!quiet) {
+    console.log('[lintnode] version:', package_info.version);
+    console.log('[lintnode] jslint edition:', jslint.edition);
+    console.log("[lintnode]", properties);
+}
+
 var http_server = http.createServer(app);
 http_server.listen(jslint_port, function () {
-    console.log("[lintnode] server running on port", jslint_port);
+    if (!quiet) {
+        console.log("[lintnode] server running on port", jslint_port);
+    }
 });
