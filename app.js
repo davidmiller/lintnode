@@ -20,7 +20,7 @@
 
 var express = require("express");
 var http = require('http');
-var jslint = require('./fulljslint').jslint;
+var jslint = require('./nodelint');
 var package_info = require('./package');
 
 var app = express();
