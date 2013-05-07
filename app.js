@@ -43,7 +43,7 @@ var outputPrettyErrors = function (filename, errors) {
                 pad = ' ' + pad;
             }
             e.evidence = e.evidence || '';
-            results.push(pad, e.reason || '', '\n    ', e.evidence.replace(/^\s*/, ''), ' // Line ', e.line + 1, ', Pos ', e.character + 1, '\n');
+            results.push(pad, e.reason || '', '\n    ', e.evidence.replace(/^\s*/, ''), ' // Line ', e.line, ', Pos ', e.character, '\n');
         }
     });
     return results.join('');
