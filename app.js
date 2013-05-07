@@ -34,7 +34,22 @@ var quiet = false;
 var jslint_options = {
 };
 
-var outputErrors = function (errors) {
+var outputPrettyErrors = function (filename, errors) {
+    var results = ['', filename, '\n'];
+    errors.forEach(function (e, i) {
+        if (e) {
+            var pad = '#' + i + ' ';
+            while (pad.length < 4) {
+                pad = ' ' + pad;
+            }
+            e.evidence = e.evidence || '';
+            results.push(pad, e.reason || '', '\n    ', e.evidence.replace(/^\s*/, ''), ' // Line ', e.line + 1, ', Pos ', e.character + 1, '\n');
+        }
+    });
+    return results.join('');
+};
+
+var outputTerseErrors = function (filename, errors) {
     var e, i, output = [];
     // debug("Handling " + errors.length + "errors" + '\n');
 
@@ -48,21 +63,36 @@ var outputErrors = function (errors) {
             output.push('\n');
         }
     }
-    return output.join('');
+    return filename + '\n' + output.join('');
+};
+
+var getOptionString = function () {
+    return Object.keys(jslint_options).map(function (opt) {
+        return opt + ": " + jslint_options[opt];
+    }).join('; ');
 };
 
 app.get('/', function (req, res) {
-    res.type('text/plain').end('lintnode version: ' + package_info.version + '\n' + 'jslint edition: ' + jslint.edition + '\n');
+    res.type('text/plain').end('lintnode version: ' + package_info.version + '\n' + 'jslint edition: ' + jslint.edition + '\n' + 'options: ' + getOptionString());
 });
 
 app.post('/jslint', function (req, res) {
+    if (req.body.source.substr(0, 2) === '#!') {
+        /*jslint regexp: true*/
+        req.body.source = req.body.source.replace(/^#!.*/, '');
+        /*jslint regexp: false*/
+    }
     function doLint(sourcedata) {
         var passed, results;
         passed = jslint(sourcedata, jslint_options);
         if (passed) {
             results = "jslint: No problems found in " + req.body.filename + "\n";
         } else {
-            results = outputErrors(jslint.errors);
+            if (req.body.pretty) {
+                results = outputPrettyErrors(req.body.filename, jslint.errors);
+            } else {
+                results = outputTerseErrors(req.body.filename, jslint.errors);
+            }
         }
         return results;
     }
@@ -73,7 +103,7 @@ app.post('/jslint', function (req, res) {
 var exampleErrors = function (req, res) {
     jslint("a = function(){ return 7 + x }()",
         jslint_options);
-    res.type('text/plain').end(outputErrors(jslint.errors));
+    res.type('text/plain').end(outputTerseErrors('example', jslint.errors));
 };
 
 /* This action always returns JSLint's a-okay message. */
@@ -88,7 +118,7 @@ app.get('/example/ok', exampleOk);
 app.post('/example/ok', exampleOk);
 
 function parseCommandLine() {
-    var port_index, exclude_index, exclude_opts, include_index, include_opts, set_index, set_opts, set_pair, properties, help_index, quiet_index;
+    var port_index, exclude_index, exclude_opts, include_index, include_opts, set_index, set_opts, set_pair, help_index, quiet_index;
     port_index = process.argv.indexOf('--port');
     exclude_index = process.argv.indexOf('--exclude');
     include_index = process.argv.indexOf('--include');
@@ -151,10 +181,6 @@ function parseCommandLine() {
         console.error('\t\tThis help');
         process.exit(0);
     }
-    properties = Object.keys(jslint_options).map(function (opt) {
-        return opt + ": " + jslint_options[opt];
-    }).join('; ');
-    return properties;
 }
 
 process.on('SIGINT', function () {
@@ -164,12 +190,12 @@ process.on('SIGINT', function () {
     process.exit(0);
 });
 
-var properties = parseCommandLine();
+parseCommandLine();
 
 if (!quiet) {
     console.log('[lintnode] version:', package_info.version);
     console.log('[lintnode] jslint edition:', jslint.edition);
-    console.log("[lintnode]", properties);
+    console.log("[lintnode]", getOptionString());
 }
 
 var http_server = http.createServer(app);
