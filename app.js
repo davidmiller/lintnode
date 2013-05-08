@@ -35,7 +35,7 @@ var jslint_options = {
 };
 
 var outputPrettyErrors = function (filename, errors) {
-    var results = ['', filename, '\n'];
+    var results = ['\n', filename, '\n'];
     errors.forEach(function (e, i) {
         if (e) {
             var pad = '#' + i + ' ';
